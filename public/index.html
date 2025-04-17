@@ -178,9 +178,8 @@
     </div>
     
     <div id="chat-container">
-
         <div id="chat-header">
-            <h3>Chat Online</h3>
+            <h3>ChatBot de Clima</h3>
             <button id="close-chat"><i class="fas fa-times"></i></button>
         </div>
         
@@ -194,12 +193,12 @@
                 </button>
             </form>
         </div>
-
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script>
         const socket = io('http://localhost:3001');
+        
         const chatBubble = document.getElementById('chat-bubble');
         const chatContainer = document.getElementById('chat-container');
         const closeChat = document.getElementById('close-chat');
@@ -218,6 +217,8 @@
                 chatContainer.classList.add('visible');
                 unreadMessages = 0;
                 updateUnreadCount();
+            } else {
+                chatContainer.classList.remove('visible');
             }
         });
         
@@ -250,11 +251,16 @@
         });
         
         socket.on('receivedMessage', (msg) => {
-            const isSelf = msg.username === username;
-            addMessage(msg, isSelf);
+            const messageData = {
+                username: msg.username || "Bot",
+                message: msg.message,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            
+            addMessage(messageData, false);
             scrollToBottom();
             
-            if (!isChatVisible && !isSelf) {
+            if (!isChatVisible && messageData.username !== username) {
                 unreadMessages++;
                 updateUnreadCount();
             }
@@ -269,7 +275,7 @@
             infoDiv.textContent = `${msg.username} • ${msg.timestamp}`;
             
             const textDiv = document.createElement('div');
-            textDiv.textContent = msg.message;
+            textDiv.innerHTML = msg.message.replace(/\n/g, '<br>');
             
             messageDiv.appendChild(infoDiv);
             messageDiv.appendChild(textDiv);
